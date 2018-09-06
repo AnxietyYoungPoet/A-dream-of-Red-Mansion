@@ -27,13 +27,9 @@ def cal_weights(text):
 def gen_dict():
   with open('texts/original2.txt', 'r', encoding='utf-8') as f:
     text = f.read()
-  s = re.split(r'第\w+回\s+', text)
-  for _ in range(94):
-    s.pop(0)
-  # print(len(s))
   weights_dict = cal_weights(text)
-  # print(len(weights_dict.keys()))
-  huffman_coding(weights_dict)
+  sorted_s = sorted(weights_dict.items(), key=lambda d: d[1], reverse=True)
+  print(sorted_s[:10])
 
 
 def split2chaps():
@@ -49,4 +45,4 @@ def split2chaps():
 
 
 if __name__ == '__main__':
-  split2chaps()
+  gen_dict()
