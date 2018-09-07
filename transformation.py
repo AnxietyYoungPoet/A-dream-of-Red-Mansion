@@ -130,9 +130,9 @@ def split2chaps():
 
 
 if __name__ == '__main__':
-  # split2chaps()
-  # gen_dict()
-  # encoding()
-  # decoding()
+  split2chaps()
+  gen_dict()
+  encoding()
+  decoding()
   num_encoding()
   num_decoding()
