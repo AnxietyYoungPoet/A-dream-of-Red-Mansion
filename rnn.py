@@ -219,7 +219,11 @@ class CharRNN(object):
                 next_h, next_c, _ = lstm_step_forward(x, prev_h, prev_c, Wx, Wh, b)
                 prev_c = next_c
             scores = next_h.dot(W_vocab) + b_vocab
+            # p = np.exp(scores - np.max(scores))
+            # p /= np.sum(p)
+            # x = np.random.choice(range(len(p)), p=p.ravel())
             x = np.argmax(scores)
+            # print(x, length)
             captions.append(x)
             length += 1
             if x == self._end or length > 1000:
