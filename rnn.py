@@ -1,5 +1,6 @@
 from builtins import object
 import numpy as np
+import pickle
 
 from layers import *
 from rnn_layers import *
@@ -71,7 +72,7 @@ class CharRNN(object):
 
     def reset_prev(self):
         self.prev_h = np.zeros(len(self.prev_h))
-        self.prev_c = np.zeros((len(self.prev_c)))
+        self.prev_c = np.zeros(len(self.prev_c))
 
     def loss(self, captions):
         """
@@ -153,7 +154,7 @@ class CharRNN(object):
 
         return loss, grads
 
-    def sample(self):
+    def sample(self, h0=None, x0=None, c0=None):
         """
         Run a test-time forward pass for the model, sampling captions for input
         feature vectors.
@@ -205,8 +206,13 @@ class CharRNN(object):
         # NOTE: we are still working over minibatches in this function. Also if   #
         # you are using an LSTM, initialize the first cell state to zeros.        #
         ###########################################################################
-        h0 = np.zeros(len(self.prev_h))
-        embed_start = W_embed[self._start, :]
+        if h0 is None:
+            h0 = np.zeros(len(self.prev_h))
+        if c0 is None:
+            h0 = np.zeros(len(self.prev_h))
+        if x0 is None:
+            x0 = self._start
+        embed_start = W_embed[x0, :]
         prev_h = h0
         prev_c = np.zeros_like(h0)
         x = embed_start
@@ -219,14 +225,14 @@ class CharRNN(object):
                 next_h, next_c, _ = lstm_step_forward(x, prev_h, prev_c, Wx, Wh, b)
                 prev_c = next_c
             scores = next_h.dot(W_vocab) + b_vocab
-            # p = np.exp(scores - np.max(scores))
-            # p /= np.sum(p)
-            # x = np.random.choice(range(len(p)), p=p.ravel())
-            x = np.argmax(scores)
+            p = np.exp(scores - np.max(scores))
+            p /= np.sum(p)
+            x = np.random.choice(range(len(p)), p=p.ravel())
+            # x = np.argmax(scores)
             # print(x, length)
             captions.append(x)
             length += 1
-            if x == self._end or length > 1000:
+            if length > 3000:
                 break
             prev_h = next_h
             x = W_embed[x, :]
@@ -234,3 +240,15 @@ class CharRNN(object):
         #                             END OF YOUR CODE                             #
         ############################################################################
         return np.array(captions)
+
+    def save_model(self, epoch='', state=False):
+        print('save model')
+        with open(f'model/params{epoch}.pk', 'wb') as f:
+            pickle.dump(self.params, f)
+        if state:
+            np.save('model/state/ch.npy', np.array([self.prev_h, self.prev_c]))
+
+    def load_model(self, epoch=''):
+        print('load model')
+        with open(f'model/params{epoch}.pk', 'rb') as f:
+            self.params = pickle.load(f)

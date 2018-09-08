@@ -4,12 +4,13 @@ import numpy as np
 class Data(object):
   def __init__(self):
     self.data = []
-    for i in range(1, 81):
+    self.num_chap = 1
+    for i in range(1, self.num_chap + 1):
       self.data.append(np.load(f'texts/num_ver/chapter{i}.npy'))
     self.reset_batch_pointer()
     self.reset_epoch_pointer()
     self.endlabels = []
-    for i in range(80):
+    for i in range(self.num_chap):
       self.endlabels.append(self.data[i][-1])
 
   def shuffle_data(self):
@@ -24,23 +25,24 @@ class Data(object):
 
   def split_data(self, batch_size):
     self.num_batch = []
-    for i in range(80):
-      length = len(data[i][:-1])
+    for i in range(self.num_chap):
+      length = len(self.data[i][:-1])
       self.data[i] = np.split(
         self.data[i][:-1], np.arange(batch_size, length, batch_size).tolist())
-      self.num_bath.append(len(Data[i]))
+      self.num_batch.append(len(self.data[i]))
 
   def next_batch(self):
-    if self.batch_pointer >= self.num_bath[self.epoch_pointer] - 1:
+    if self.batch_pointer >= self.num_batch[self.epoch_pointer] - 1:
       self.reset_batch_pointer()
       self.epoch_pointer += 1
       if self.epoch_pointer >= len(self.data):
         self.reset_epoch_pointer()
+        self.shuffle_data()
     self.batch_pointer += 1
     try:
       extra_label = self.data[self.epoch_pointer][self._pointer + 1][0]
     except Exception:
-      extra_label = self.endlabel[self.epoch_pointer]
+      extra_label = self.endlabels[self.epoch_pointer]
     return self.data[self.epoch_pointer][self.batch_pointer], extra_label, self.batch_pointer == 0
 
 

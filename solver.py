@@ -201,7 +201,10 @@ class CharSolver(object):
         Run optimization to train the model.
         """
         self.data.split_data(self.batch_size)
-        num_iterations = self.num_epochs * len(self.data.data)
+        batchs = 0
+        for i in range(self.data.num_chap):
+            batchs += len(self.data.data[i])
+        num_iterations = self.num_epochs * batchs
 
         for t in range(num_iterations):
             self._step()
@@ -210,11 +213,14 @@ class CharSolver(object):
             if self.verbose and t % self.print_every == 0:
                 print('(Iteration %d / %d) loss: %f' % (
                     t + 1, num_iterations, self.loss_history[-1]))
+            if t % (100 * self.print_every) == 0 and t != 0:
+                self.model.save_model(t)
 
             # At the end of every epoch, increment the epoch counter and decay the
             # learning rate.
-            epoch_end = (t + 1) % len(self.data.data) == 0
+            epoch_end = (t + 1) % batchs == 0
             if epoch_end:
                 self.epoch += 1
                 for k in self.optim_configs:
                     self.optim_configs[k]['learning_rate'] *= self.lr_decay
+        self.model.save_model(state=True)
